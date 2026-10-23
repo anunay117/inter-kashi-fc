@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Match | Inter Kashi FC</title>
+<meta name="description" content="Unofficial fan site for Inter Kashi FC, the Varanasi-based Indian Super League club.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head><body>
+<nav><div class="wrap">
+<a class="brand" href="index.html"><img src="assets/logo.png" alt="Inter Kashi FC crest">Inter Kashi</a>
+<ul class="links"><li><a href="index.html">Home</a></li><li><a href="club.html">Club</a></li><li><a href="history.html">History</a></li><li><a href="squad.html">Squad</a></li><li><a href="staff.html">Staff</a></li><li><a href="live.html" class=cur>Live</a></li><li><a href="fixtures.html">Fixtures</a></li><li><a href="seasons.html">Seasons</a></li></ul></div></nav>
+<header class="pagehead"><div class="wrap"><div class="stripes"></div><div class="eyebrow">ISL 2026-27</div><h1>Match <em>Centre</em></h1></div></header>
+<section><div class="wrap" style="max-width:900px">
+<div class="sb" id="sb"><div class="sbt" id="sbstat">Loading&hellip;</div>
+<div class="sbm"><div class="tm" id="th">&mdash;</div><div class="sc" id="sc">- : -</div><div class="tm" id="ta">&mdash;</div></div>
+<div class="sbv" id="sbv"></div></div>
+<div class="note" id="lnote"></div>
+<h3 class="lh">Match events</h3><div id="ev" class="evs"><p class="muted">No events yet.</p></div>
+<h3 class="lh">Match stats</h3><div id="st"><p class="muted">Stats appear once the match is underway.</p></div>
+<p class="muted" style="font-size:.8rem;margin-top:18px">Updated: <span id="upd">&mdash;</span>. This page refreshes itself every 20 seconds, but figures are compiled by hand from public match coverage and can be a few minutes behind. For the official real-time feed, see the <a href="https://www.indiansuperleague.com/matchcentre/194646" target="_blank" rel="noopener" style="color:var(--gold)">ISL matchcentre</a>.</p>
+</div></section>
+<footer><div class="wrap">
+<div><img src="assets/logo.png" alt="" style="height:56px;margin-bottom:10px"><br>
+Unofficial fan-made website. Not affiliated with Inter Kashi FC or the Indian Super League.<br>
+Club crest and player images belong to their respective owners.</div>
+<div>Sources:<br>
+<a href="https://www.indiansuperleague.com/clubs/2354-inter-kashi-profile">indiansuperleague.com</a><br>
+<a href="https://en.wikipedia.org/wiki/Inter_Kashi_FC">Wikipedia (CC BY-SA 4.0)</a><br>
+<a href="https://khelnow.com/football/indian-football-isl-2026-27-inter-kashi-fixtures">Khel Now</a><br>
+Last updated 23 Oct 2026</div>
+</div></footer><script>
+const $=id=>document.getElementById(id),esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ICON={goal:'&#9917;',yellow:'&#128993;',red:'&#128997;',sub:'&#128257;',info:'&#8226;',ht:'&#9202;',ft:'&#127937;'};
+async function load(){try{const r=await fetch('data/live.json?t='+Date.now(),{cache:'no-store'});const d=await r.json();
+$('sbstat').textContent=d.status+(d.minute?' \u00b7 '+d.minute:'');$('th').textContent=d.home;$('ta').textContent=d.away;
+$('sc').textContent=(d.homeScore??'-')+' : '+(d.awayScore??'-');$('sbv').textContent=d.venue+' \u00b7 '+d.kickoff;
+$('lnote').style.display=d.note?'block':'none';$('lnote').textContent=d.note||'';$('upd').textContent=d.updated;
+$('ev').innerHTML=(d.events&&d.events.length)?d.events.slice().reverse().map(e=>'<div class="e"><span class="em">'+esc(e.min)+'</span><span class="ei">'+(ICON[e.type]||ICON.info)+'</span><span>'+esc(e.text)+'</span></div>').join(''):'<p class="muted">No events yet.</p>';
+$('st').innerHTML=(d.stats&&d.stats.length)?d.stats.map(s=>{const a=parseFloat(s.home)||0,b=parseFloat(s.away)||0,t=(a+b)||1;return '<div class="sr"><b>'+esc(s.home)+'</b><div class="bar"><i style="width:'+(a/t*100)+'%"></i></div><span>'+esc(s.label)+'</span><div class="bar r"><i style="width:'+(b/t*100)+'%"></i></div><b>'+esc(s.away)+'</b></div>'}).join(''):'<p class="muted">Stats appear once the match is underway.</p>';
+}catch(e){$('sbstat').textContent='Live data unavailable'}}
+load();setInterval(load,20000);
+</script></body></html>
