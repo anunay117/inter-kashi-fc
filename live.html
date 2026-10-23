@@ -13,6 +13,7 @@
 <ul class="links"><li><a href="index.html">Home</a></li><li><a href="club.html">Club</a></li><li><a href="history.html">History</a></li><li><a href="squad.html">Squad</a></li><li><a href="staff.html">Staff</a></li><li><a href="live.html" class=cur>Live</a></li><li><a href="fixtures.html">Fixtures</a></li><li><a href="seasons.html">Seasons</a></li></ul></div></nav>
 <header class="pagehead"><div class="wrap"><div class="stripes"></div><div class="eyebrow">ISL 2026-27</div><h1>Match <em>Centre</em></h1></div></header>
 <section><div class="wrap" style="max-width:900px">
+<a id="back" href="fixtures.html" style="display:none;color:var(--gold);margin-bottom:14px">&larr; All fixtures &amp; results</a>
 <div class="sb"><div class="sbt" id="sbstat">Loading&hellip;</div>
 <div class="sbm"><div class="tm" id="th">&mdash;</div><div class="sc" id="sc">- : -</div><div class="tm" id="ta">&mdash;</div></div>
 <div class="sbv" id="sbv"></div></div>
@@ -62,7 +63,7 @@ function render(ev,sum){
 }
 async function load(){
   try{
-    let ev=await findEvent();const id=ev?ev.id:FALLBACK_ID;
+    const qid=new URLSearchParams(location.search).get('id');if(qid)$('back').style.display='inline-block';let ev=qid?null:await findEvent();const id=qid||(ev?ev.id:FALLBACK_ID);
     const sum=await j(API+'summary?event='+id);
     if(!ev){const hd=sum.header.competitions[0];ev={id:id,date:hd.date,name:'',status:hd.status,competitions:[{competitors:hd.competitors,venue:sum.gameInfo&&sum.gameInfo.venue}]}}
     const state=render(ev,sum);

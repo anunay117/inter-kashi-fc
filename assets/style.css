@@ -155,3 +155,5 @@ footer a{color:var(--gold)}
 .sr span{color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.06em}
 .bar{height:8px;background:#2c2c2f;border-radius:4px;overflow:hidden;display:flex;justify-content:flex-end}.bar.r{justify-content:flex-start}
 .bar i{display:block;background:linear-gradient(90deg,var(--orange),var(--gold))}
+a.fx{text-decoration:none;color:inherit}a.fx:hover{background:#222226;transform:translateX(3px)}
+a.fx .k{font-weight:700}.fx.W .k{color:#3fb950}.fx.L .k{color:#e5484d}
