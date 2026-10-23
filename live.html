@@ -13,13 +13,14 @@
 <ul class="links"><li><a href="index.html">Home</a></li><li><a href="club.html">Club</a></li><li><a href="history.html">History</a></li><li><a href="squad.html">Squad</a></li><li><a href="staff.html">Staff</a></li><li><a href="live.html" class=cur>Live</a></li><li><a href="fixtures.html">Fixtures</a></li><li><a href="seasons.html">Seasons</a></li></ul></div></nav>
 <header class="pagehead"><div class="wrap"><div class="stripes"></div><div class="eyebrow">ISL 2026-27</div><h1>Match <em>Centre</em></h1></div></header>
 <section><div class="wrap" style="max-width:900px">
-<div class="sb" id="sb"><div class="sbt" id="sbstat">Loading&hellip;</div>
+<div class="sb"><div class="sbt" id="sbstat">Loading&hellip;</div>
 <div class="sbm"><div class="tm" id="th">&mdash;</div><div class="sc" id="sc">- : -</div><div class="tm" id="ta">&mdash;</div></div>
 <div class="sbv" id="sbv"></div></div>
-<div class="note" id="lnote"></div>
-<h3 class="lh">Match events</h3><div id="ev" class="evs"><p class="muted">No events yet.</p></div>
+<h3 class="lh">Match events</h3><div id="ev"><p class="muted">No events yet.</p></div>
 <h3 class="lh">Match stats</h3><div id="st"><p class="muted">Stats appear once the match is underway.</p></div>
-<p class="muted" style="font-size:.8rem;margin-top:18px">Updated: <span id="upd">&mdash;</span>. This page refreshes itself every 20 seconds, but figures are compiled by hand from public match coverage and can be a few minutes behind. For the official real-time feed, see the <a href="https://www.indiansuperleague.com/matchcentre/194646" target="_blank" rel="noopener" style="color:var(--gold)">ISL matchcentre</a>.</p>
+<h3 class="lh">Live commentary</h3><div id="cm"><p class="muted">Commentary appears once the match starts.</p></div>
+<h3 class="lh">Line-ups</h3><div class="two" id="lu"><p class="muted">Line-ups appear closer to kick-off.</p></div>
+<p class="muted" style="font-size:.8rem;margin-top:22px">Auto-refreshes every 60 seconds (next in <span id="cd">60</span>s). Last refreshed: <span id="upd">&mdash;</span>. Data from ESPN's public football feed, so it can lag the broadcast by a minute or two and may occasionally be incomplete. Official real-time feed: <a href="https://www.indiansuperleague.com/schedule-fixtures" target="_blank" rel="noopener" style="color:var(--gold)">ISL matchcentre</a>.</p>
 </div></section>
 <footer><div class="wrap">
 <div><img src="assets/logo.png" alt="" style="height:56px;margin-bottom:10px"><br>
@@ -31,14 +32,43 @@ Club crest and player images belong to their respective owners.</div>
 <a href="https://khelnow.com/football/indian-football-isl-2026-27-inter-kashi-fixtures">Khel Now</a><br>
 Last updated 23 Oct 2026</div>
 </div></footer><script>
-const $=id=>document.getElementById(id),esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const ICON={goal:'&#9917;',yellow:'&#128993;',red:'&#128997;',sub:'&#128257;',info:'&#8226;',ht:'&#9202;',ft:'&#127937;'};
-async function load(){try{const r=await fetch('data/live.json?t='+Date.now(),{cache:'no-store'});const d=await r.json();
-$('sbstat').textContent=d.status+(d.minute?' \u00b7 '+d.minute:'');$('th').textContent=d.home;$('ta').textContent=d.away;
-$('sc').textContent=(d.homeScore??'-')+' : '+(d.awayScore??'-');$('sbv').textContent=d.venue+' \u00b7 '+d.kickoff;
-$('lnote').style.display=d.note?'block':'none';$('lnote').textContent=d.note||'';$('upd').textContent=d.updated;
-$('ev').innerHTML=(d.events&&d.events.length)?d.events.slice().reverse().map(e=>'<div class="e"><span class="em">'+esc(e.min)+'</span><span class="ei">'+(ICON[e.type]||ICON.info)+'</span><span>'+esc(e.text)+'</span></div>').join(''):'<p class="muted">No events yet.</p>';
-$('st').innerHTML=(d.stats&&d.stats.length)?d.stats.map(s=>{const a=parseFloat(s.home)||0,b=parseFloat(s.away)||0,t=(a+b)||1;return '<div class="sr"><b>'+esc(s.home)+'</b><div class="bar"><i style="width:'+(a/t*100)+'%"></i></div><span>'+esc(s.label)+'</span><div class="bar r"><i style="width:'+(b/t*100)+'%"></i></div><b>'+esc(s.away)+'</b></div>'}).join(''):'<p class="muted">Stats appear once the match is underway.</p>';
-}catch(e){$('sbstat').textContent='Live data unavailable'}}
-load();setInterval(load,20000);
+const API='https://site.api.espn.com/apis/site/v2/sports/soccer/ind.1/',FALLBACK_ID='401925428',TEAM='Inter Kashi';
+const $=id=>document.getElementById(id),esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ICON={'goal':'&#9917;','own-goal':'&#9917;','penalty---scored':'&#9917;','yellow-card':'&#129000;','red-card':'&#128997;','substitution':'&#128257;','halftime':'&#9202;','end-regular-time':'&#127937;','kickoff':'&#9654;'};
+const STATS=[['possessionPct','Possession %'],['totalShots','Shots'],['shotsOnTarget','On target'],['wonCorners','Corners'],['foulsCommitted','Fouls'],['offsides','Offsides'],['saves','Saves'],['accuratePasses','Passes (acc.)'],['yellowCards','Yellow cards'],['redCards','Red cards']];
+let timer=null,left=60;
+async function j(u){const r=await fetch(u+(u.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function findEvent(){try{const sb=await j(API+'scoreboard');const e=(sb.events||[]).find(e=>e.name.includes(TEAM));if(e)return e}catch(e){}return null}
+function ordered(ev){const cs=ev.competitions[0].competitors;return [cs.find(c=>c.homeAway==='home')||cs[0],cs.find(c=>c.homeAway==='away')||cs[1]]}
+function render(ev,sum){
+  const c=ev.competitions[0],[h,a]=ordered(ev),st=ev.status,t=st.type;
+  const live=t.state==='in';
+  $('sbstat').textContent=(live?'LIVE · ':'')+t.description+(live&&st.displayClock?' · '+st.displayClock:'');
+  $('th').textContent=h.team.displayName;$('ta').textContent=a.team.displayName;
+  $('sc').textContent=t.state==='pre'?'vs':(h.score+' : '+a.score);
+  $('sbv').textContent=(c.venue&&c.venue.fullName?c.venue.fullName+' · ':'')+new Date(ev.date).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})+' IST';
+  const ke=(sum.keyEvents||[]);
+  $('ev').innerHTML=ke.length?ke.slice().reverse().map(e=>'<div class="e"><span class="em">'+esc(e.clock&&e.clock.displayValue)+'</span><span class="ei">'+(ICON[e.type&&e.type.type]||'&#8226;')+'</span><span>'+esc(e.text||e.shortText)+'</span></div>').join(''):'<p class="muted">No events yet.</p>';
+  const bt=(sum.boxscore&&sum.boxscore.teams)||[],get=(name)=>{const x=bt.find(b=>b.team.displayName===name);return x?Object.fromEntries(x.statistics.map(s=>[s.name,s.displayValue])):{}};
+  const hs=get(h.team.displayName),as=get(a.team.displayName);
+  const rows=STATS.filter(([k])=>hs[k]!==undefined||as[k]!==undefined).map(([k,l])=>{const x=parseFloat(hs[k])||0,y=parseFloat(as[k])||0,tt=(x+y)||1;return '<div class="sr"><b>'+esc(hs[k]??'-')+'</b><div class="bar"><i style="width:'+(x/tt*100)+'%"></i></div><span>'+l+'</span><div class="bar r"><i style="width:'+(y/tt*100)+'%"></i></div><b>'+esc(as[k]??'-')+'</b></div>'});
+  $('st').innerHTML=rows.length&&t.state!=='pre'?rows.join(''):'<p class="muted">Stats appear once the match is underway.</p>';
+  const cm=(sum.commentary||[]);
+  $('cm').innerHTML=cm.length?cm.slice().reverse().slice(0,40).map(e=>'<div class="e"><span class="em">'+esc(e.time&&e.time.displayValue)+'</span><span>'+esc(e.text)+'</span></div>').join(''):'<p class="muted">Commentary appears once the match starts.</p>';
+  const ro=(sum.rosters||[]);
+  $('lu').innerHTML=ro.length&&ro.some(r=>(r.roster||[]).length)?ro.map(r=>{const xs=(r.roster||[]).filter(p=>p.starter),bn=(r.roster||[]).filter(p=>!p.starter);const li=p=>'<li>'+esc(p.jersey||'')+' '+esc(p.athlete&&p.athlete.displayName)+'</li>';return '<div class="card"><h3>'+esc(r.team.displayName)+(r.formation?' <span class="muted" style="font-size:.8rem">'+esc(r.formation)+'</span>':'')+'</h3><ul style="margin:0 0 0 18px">'+xs.map(li).join('')+'</ul>'+(bn.length?'<p class="muted" style="margin-top:10px;font-size:.8rem">Substitutes</p><ul style="margin:0 0 0 18px;font-size:.9rem">'+bn.map(li).join('')+'</ul>':'')+'</div>'}).join(''):'<p class="muted">Line-ups appear closer to kick-off.</p>';
+  $('upd').textContent=new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+' IST';
+  return t.state;
+}
+async function load(){
+  try{
+    let ev=await findEvent();const id=ev?ev.id:FALLBACK_ID;
+    const sum=await j(API+'summary?event='+id);
+    if(!ev){const hd=sum.header.competitions[0];ev={id:id,date:hd.date,name:'',status:hd.status,competitions:[{competitors:hd.competitors,venue:sum.gameInfo&&sum.gameInfo.venue}]}}
+    const state=render(ev,sum);
+    left=state==='post'?300:60;
+  }catch(e){$('sbstat').textContent='Live data temporarily unavailable, retrying…';left=60}
+}
+function tick(){left--;$('cd').textContent=Math.max(left,0);if(left<=0){left=60;load()}}
+load();setInterval(tick,1000);
 </script></body></html>
