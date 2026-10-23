@@ -139,3 +139,6 @@ footer a{color:var(--gold)}
 .dot{width:10px;height:10px;border-radius:50%;border:0;background:rgba(255,255,255,.4);cursor:pointer;padding:0}
 .dot.on{background:var(--gold);width:26px;border-radius:6px}
 @media(max-width:800px){.carousel{aspect-ratio:4/5;min-height:0}.cap{padding:16px 16px 40px}.cap p{display:none}}
+.pagehead h1{max-width:900px}
+.article p{margin-bottom:14px}.article h3{color:var(--gold);margin:22px 0 8px}
+.news a{margin-bottom:10px}
